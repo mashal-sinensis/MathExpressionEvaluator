@@ -6,7 +6,7 @@ enum ExpressionAtomType {
 };
 
 class ExpressionAtom {
-private: 
+private:
 	ExpressionAtomType type;
 public:
 	ExpressionAtom(ExpressionAtomType type) : type(type) {}

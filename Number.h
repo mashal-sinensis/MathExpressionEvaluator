@@ -4,13 +4,11 @@
 #include "ExpressionAtom.h"
 #include "MathFunctions.h"
 
-using namespace std;
-
 class Number : public ExpressionAtom
 {
 private:
-	vector<char> digits;
-	vector<int> indices;
+	std::vector<char> digits;
+	std::vector<int> indices;
 	int value;
 	void translateToInteger();
 public:

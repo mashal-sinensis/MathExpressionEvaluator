@@ -10,7 +10,7 @@ public:
 	Number* secondOperand;
 	Operator* mainOperator;
 
-	Operation(Number* firstOperand, Number* secondOperand, Operator* mainOperator) 
+	Operation(Number* firstOperand, Number* secondOperand, Operator* mainOperator)
 		: firstOperand(firstOperand), secondOperand(secondOperand), mainOperator(mainOperator) {}
 
 	int solve();

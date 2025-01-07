@@ -1,10 +1,6 @@
 #include <iostream>
 #include <string>
 #include "Expression.h"
-#include "Number.h"
-#include "Operator.h"
-
-using namespace std;
 
 int main()
 {
@@ -12,22 +8,15 @@ int main()
 
 	while (run)
 	{
-		string inputExpression;
-		string answer = "";
-		vector<Number*> numbers;
-		cout << "Enter Expression: ";
-		getline(cin, inputExpression);
-		Expression* mainExpression = 
-			new Expression(inputExpression);
+		std::string inputExpression;
+		std::cout << "Enter Expression: ";
+
+		std::getline(std::cin, inputExpression);
+
+		Expression* mainExpression = new Expression(inputExpression);
+
 		mainExpression->solve();
-		cout << "Answer: " << 
-			mainExpression->getStrExpression() << endl;
-		cout << "\n-------------\n";
-		delete mainExpression;
+
+		std::cout << "Answer: " << mainExpression->getStrExpression() << std::endl << std::endl;
 	}
-
-	return 0;
 }
-
-
-

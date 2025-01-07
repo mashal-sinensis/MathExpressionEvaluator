@@ -1,13 +1,11 @@
 #include <iostream>
 #include "Expression.h"
 
-using namespace std;
-
 #define ISNUMBER(str, index) str[index] > 47 && str[index] < 58
 
-string truncateString(string input)
+std::string truncateString(std::string input)
 {
-	string temp = "";
+	std::string temp = "";
 	for (char c : input)
 	{
 		if (c != ' ' && c != '\t')
@@ -18,17 +16,18 @@ string truncateString(string input)
 	return temp;
 }
 
-Expression::Expression(string strExpression)
+Expression::Expression(std::string strExpression)
 {
 	setStrExpression(strExpression);
 }
 
 void Expression::evaluateExpressionAtoms()
 {
-	for (ExpressionAtom* atom : uniqueBeginIndexPointers)
+	for (ExpressionAtom* atom : uniqueBeginIndexPointers) // clear atoms from previous expression evals
 	{
 		delete atom;
 	}
+
 	uniqueBeginIndexPointers = {};
 	indexPointers = {};
 	numbers = {};
@@ -60,49 +59,74 @@ void Expression::evaluateExpressionAtoms()
 				indexPointers.push_back(indexPointers[i - 1]);
 			}
 		}
-		else if (strExpression[i] != '+' && strExpression[i] != '-' && strExpression[i] != '/' && strExpression[i] != '*' && strExpression[i] != '%')
+		else if (strExpression[i] != '+' && strExpression[i] != '-' && strExpression[i] != '/' && strExpression[i] != '*' && strExpression[i] != '%' && strExpression[i] != '(' && strExpression[i] != ')')
 		{
-			throw exception();
+			throw std::exception();
 		}
 		else
 		{
-			Operator* add = new Operator(strExpression[i], ExpressionAtomType::OperatorType);
-			indexPointers.push_back(add);
-			uniqueBeginIndexPointers.push_back(add);
+			Operator* op = new Operator(strExpression[i], ExpressionAtomType::OperatorType);
+			indexPointers.push_back(op);
+			uniqueBeginIndexPointers.push_back(op);
 		}
 	}
 }
 
-void Expression::setStrExpression(string strExpression)
+std::string inclusive_replace(std::string input_string, std::string replace_string, int start, int end)
+{
+	std::string output;
+	bool added_string = false;
+	bool replace_area = false;
+
+	for (int i = 0; i < input_string.size(); i++)
+	{
+		replace_area = (i <= end) && (i >= start);
+
+		if (replace_area)
+		{
+			if (!added_string)
+			{
+				output += replace_string;
+				added_string = true;
+			}
+		}
+		else
+		{
+			output += input_string[i];
+		}
+	}
+
+	return output;
+}
+
+void Expression::setStrExpression(std::string strExpression)
 {
 	this->strExpression = truncateString(strExpression);
 	evaluateExpressionAtoms();
+	classifyDirectSubExpressions();
+
+	if (directSubExpressions.size() != 0)
+	{
+		directSubExpressions[0]->solve();
+		std::string tempString = directSubExpressions[0]->getStrExpression();
+		directSubExpressions.erase(directSubExpressions.begin());
+		setStrExpression(inclusive_replace(this->strExpression, tempString, directSubExpressionIndices[0]->startIndex, directSubExpressionIndices[0]->endIndex));
+	}
 }
 
-int Expression::solve()
+void Expression::solve()
 {
 	while (simplifyStep()) {}
-
-	if (uniqueBeginIndexPointers.size() > 3)
-	{
-		throw exception();
-	}
-	if (uniqueBeginIndexPointers[0]->getType() != ExpressionAtomType::NumberType
-		&& uniqueBeginIndexPointers[1]->getType() != ExpressionAtomType::OperatorType
-		&& uniqueBeginIndexPointers[2]->getType() != ExpressionAtomType::NumberType)
-	{
-		throw exception();
-	}
 }
 
-string translateIntegerToString(int value)
+std::string translateIntegerToString(int value)
 {
 	if (value == 0)
 	{
 		return "0";
 	}
 
-	string strValue = "";
+	std::string strValue = "";
 	int tempValue{ value };
 
 	int place = 1000000000;
@@ -136,7 +160,7 @@ string translateIntegerToString(int value)
 
 bool Expression::simplifyStep()
 {
-	vector<Operation*> operations;
+	std::vector<Operation*> operations;
 
 	if (uniqueBeginIndexPointers.size() < 3)
 	{
@@ -148,8 +172,8 @@ bool Expression::simplifyStep()
 		if (uniqueBeginIndexPointers[i]->getType() != ExpressionAtomType::NumberType
 			&& uniqueBeginIndexPointers[i + 1]->getType() != ExpressionAtomType::OperatorType
 			&& uniqueBeginIndexPointers[i + 2]->getType() != ExpressionAtomType::NumberType)
-		{
-			throw exception();
+		{ // validation check
+			throw std::exception();
 		}
 
 		Number* num1 = static_cast<Number*>(uniqueBeginIndexPointers[i]);
@@ -160,7 +184,7 @@ bool Expression::simplifyStep()
 		operations.push_back(operation);
 	}
 
-	vector<Operation*> sortedOperations;
+	std::vector<Operation*> sortedOperations;
 
 	// Multiplication Pass
 	for (int i = 0; i < operations.size(); i++)
@@ -206,8 +230,8 @@ bool Expression::simplifyStep()
 			sortedOperations.push_back(operations[i]);
 		}
 	}
-	
-	vector<int> indicesOfHighestOrderOperation;
+
+	std::vector<int> indicesOfHighestOrderOperation;
 	for (int i = 0; i < indexPointers.size(); i++)
 	{
 		if (indexPointers[i] == sortedOperations[0]->firstOperand)
@@ -224,15 +248,15 @@ bool Expression::simplifyStep()
 		}
 	}
 
-	cout << "\n" << sortedOperations[0]->firstOperand->getValue() << (char)sortedOperations[0]->mainOperator->getValue() << sortedOperations[0]->secondOperand->getValue() << " = ";
+	std::cout << "\n" << sortedOperations[0]->firstOperand->getValue() << (char)sortedOperations[0]->mainOperator->getValue() << sortedOperations[0]->secondOperand->getValue() << " = ";
 
 	int value = sortedOperations[0]->solve();
 
-	cout << value << endl;
+	std::cout << value << std::endl;
 
-	string valueString = translateIntegerToString(value);
+	std::string valueString = translateIntegerToString(value);
 	bool addedValueString = false;
-	string newStrExpression = "";
+	std::string newStrExpression = "";
 
 	for (int i = 0; i < strExpression.size(); i++)
 	{
@@ -261,7 +285,7 @@ bool Expression::simplifyStep()
 		}
 	}
 
-	cout << "Thus, " << strExpression << " = " << newStrExpression << endl;
+	std::cout << "Thus, " << strExpression << " = " << newStrExpression << std::endl;
 	setStrExpression(newStrExpression);
 
 	for (Operation* operation : operations)
@@ -270,6 +294,66 @@ bool Expression::simplifyStep()
 	}
 
 	return true;
+}
+
+void Expression::classifyDirectSubExpressions()
+{
+	deallocSubExpressionVariables();
+
+	int parenthesisLevel = 0;
+	int start = 0;
+
+	for (int i = 0; i < strExpression.size(); i++)
+	{
+		if (strExpression[i] == '(')
+		{
+			if (parenthesisLevel == 0) {
+				Expression* newDirectSubExpression = new Expression("");
+				directSubExpressions.push_back(newDirectSubExpression);
+				directSubExpressionStrings.push_back(new std::string);
+				start = i;
+				parenthesisLevel++;
+				continue;
+			}
+
+			parenthesisLevel++;
+		}
+
+		if (strExpression[i] == ')')
+		{
+			parenthesisLevel--;
+			if (parenthesisLevel == 0)
+			{
+				directSubExpressions[directSubExpressions.size() - 1]->setStrExpression(*directSubExpressionStrings[directSubExpressionStrings.size() - 1]);
+				directSubExpressionIndices.push_back(new Expression::SubExpressionIndices(start, i));
+				continue;
+			}
+		}
+
+		if (parenthesisLevel != 0)
+		{
+			directSubExpressionStrings[directSubExpressionStrings.size() - 1]->push_back(strExpression[i]);
+		}
+	}
+}
+
+void Expression::deallocSubExpressionVariables()
+{
+	for (Expression* expression : directSubExpressions)
+	{
+		delete expression;
+	}
+
+	directSubExpressionStrings.clear();
+}
+
+void Expression::directSubExpressionPrintChain(int nestValue)
+{
+	for (int i = 0; i < directSubExpressions.size(); i++)
+	{
+		std::cout << "Direct Sub Expression NestValue #" << nestValue + 1 << ", Number #" << i + 1 << ": " << directSubExpressions[i]->getStrExpression() << std::endl;
+		directSubExpressions[i]->directSubExpressionPrintChain(nestValue + 1);
+	}
 }
 
 Expression::~Expression()

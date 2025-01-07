@@ -7,20 +7,31 @@
 #include "Operator.h"
 #include "Operation.h"
 
-using namespace std;
-
 class Expression {
+	struct SubExpressionIndices {
+		SubExpressionIndices(int startIndex, int endIndex) : startIndex(startIndex), endIndex(endIndex) {}
+		int startIndex;
+		int endIndex;
+	};
+
 private:
-	string strExpression;
+	std::string strExpression;
 public:
-	vector<ExpressionAtom*> indexPointers;
-	vector<ExpressionAtom*> uniqueBeginIndexPointers;
-	vector<Number*> numbers;
-	Expression(string strExpression);
+	bool simplified;
+	std::vector<ExpressionAtom*> indexPointers;
+	std::vector<ExpressionAtom*> uniqueBeginIndexPointers;
+	std::vector<Expression*> directSubExpressions;
+	std::vector<std::string*> directSubExpressionStrings;
+	std::vector<SubExpressionIndices*> directSubExpressionIndices;
+	std::vector<Number*> numbers;
+	Expression(std::string strExpression);
 	void evaluateExpressionAtoms();
-	void setStrExpression(string strExpression);
-	string getStrExpression() const { return strExpression; }
-	int solve();
+	void setStrExpression(std::string strExpression);
+	std::string getStrExpression() const { return strExpression; }
+	void solve();
 	bool simplifyStep();
+	void classifyDirectSubExpressions();
+	void deallocSubExpressionVariables();
+	void directSubExpressionPrintChain(int nestValue);
 	~Expression();
 };
