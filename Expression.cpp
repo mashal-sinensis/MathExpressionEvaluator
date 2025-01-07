@@ -344,6 +344,10 @@ void Expression::deallocSubExpressionVariables()
 		delete expression;
 	}
 
+	directSubExpressions.clear();
+
+	directSubExpressionIndices.clear();
+
 	directSubExpressionStrings.clear();
 }
 
